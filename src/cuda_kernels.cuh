@@ -66,9 +66,12 @@ void scale_add(float *dst, const float *src, float alpha, int N);
 void apply_causal_mask(float *att, int B, int H, int T);
 
 // Helpers for cuBLAS
-float zero_float();
-float one_float();
-float minus_one_float();
+extern float _zero_f;
+extern float _one_f;
+extern float _minus_one_f;
+#define ZERO_FLOAT_PTR (&_zero_f)
+#define ONE_FLOAT_PTR (&_one_f)
+#define MINUS_ONE_FLOAT_PTR (&_minus_one_f)
 
 // Linear layer helper
 void linear_forward(float *out, const float *inp, const float *W, const float *b, int M, int Di, int Do);

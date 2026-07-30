@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cmath>
+#include <curand_kernel.h>
 #include <vector>
 
 // ============================================================
@@ -24,10 +25,10 @@ void destroy_handles() {
     if (cudnn_handle) { cudnnDestroy(cudnn_handle); cudnn_handle = nullptr; }
 }
 
-// Helpers for cuBLAS
-float zero_float() { return 0.0f; }
-float one_float() { return 1.0f; }
-float minus_one_float() { return -1.0f; }
+// Helpers for cuBLAS (static for address-of)
+float _zero_f = 0.0f;
+float _one_f = 1.0f;
+float _minus_one_f = -1.0f;
 
 // ============================================================
 // GEMM via cuBLAS
@@ -393,7 +394,9 @@ __global__ void dropout_fwd_kernel(float *out, const float *x, uint8_t *mask,
                                     int N, float p, float scale) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < N) {
-        float r = (float)rand() / RAND_MAX;
+        curandStatePhilox4_32_10_t state;
+        curand_init(42, i, 0, &state);
+        float r = curand_uniform(&state);
         mask[i] = (r < p) ? 0 : 1;
         out[i] = mask[i] ? x[i] * scale : 0.0f;
     }

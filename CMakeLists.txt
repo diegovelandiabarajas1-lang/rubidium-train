@@ -15,6 +15,11 @@ find_path(CUBLAS_INCLUDE cublas_v2.h
     HINTS ${CUDNN_DIR}/include /usr/local/cuda/include /usr/include
 )
 
+# Find cuRAND
+find_library(CURAND_LIBRARY curand
+    HINTS ${CUDNN_DIR}/lib /usr/local/cuda/lib64 /usr/lib/x86_64-linux-gnu
+)
+
 if(NOT CUBLAS_LIBRARY)
     message(FATAL_ERROR "cuBLAS not found")
 else()
@@ -56,6 +61,7 @@ target_include_directories(rubidium-train PRIVATE
 target_link_libraries(rubidium-train PRIVATE
     ${CUBLAS_LIBRARY}
     ${CUDNN_LIBRARY}
+    ${CURAND_LIBRARY}
 )
 
 if(CUDNN_FOUND)

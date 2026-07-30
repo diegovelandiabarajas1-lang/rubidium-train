@@ -178,7 +178,7 @@ float RubidiumTransformer::forward(const int *d_tokens, const int *d_targets, in
                 float *k_h = la.k + (b*T)*cfg.D + h*cfg.hd;
                 float *att_h = la.att + (b*cfg.H+h)*T*T;
                 CB(cublasSgemm(cublas_handle, CUBLAS_OP_T, CUBLAS_OP_N,
-                    T, T, cfg.hd, &scale, k_h, cfg.D, q_h, cfg.D, &zero_float(), att_h, T));
+                    T, T, cfg.hd, &scale, k_h, cfg.D, q_h, cfg.D, ZERO_FLOAT_PTR, att_h, T));
             }
         }
         apply_causal_mask(la.att, B, cfg.H, T);
@@ -192,7 +192,7 @@ float RubidiumTransformer::forward(const int *d_tokens, const int *d_targets, in
                 float *att_h = la.att_p + (b*cfg.H+h)*T*T;
                 float *ao_h = la.ao + (b*T)*cfg.D + h*cfg.hd;
                 CB(cublasSgemm(cublas_handle, CUBLAS_OP_N, CUBLAS_OP_N,
-                    cfg.hd, T, T, &one, v_h, cfg.D, att_h, T, &zero_float(), ao_h, cfg.D));
+                    cfg.hd, T, T, &one, v_h, cfg.D, att_h, T, ZERO_FLOAT_PTR, ao_h, cfg.D));
             }
         }
 
