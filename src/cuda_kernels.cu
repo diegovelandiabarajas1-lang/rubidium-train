@@ -24,10 +24,10 @@ void destroy_handles() {
     if (cudnn_handle) { cudnnDestroy(cudnn_handle); cudnn_handle = nullptr; }
 }
 
-// Static helpers for cuBLAS
-static float zero_float() { return 0.0f; }
-static float one_float() { return 1.0f; }
-static float minus_one_float() { return -1.0f; }
+// Helpers for cuBLAS
+float zero_float() { return 0.0f; }
+float one_float() { return 1.0f; }
+float minus_one_float() { return -1.0f; }
 
 // ============================================================
 // GEMM via cuBLAS
@@ -89,7 +89,7 @@ __global__ void layer_norm_fwd_kernel(float *out, float *mean, float *inv_std,
     float *s_sqsum = sh + blockDim.x;
 
     const float *xr = x + row * D;
-    float *or = out + row * D;
+    float *out_ptr = out + row * D;
 
     float local_sum = 0.0f;
     for (int i = threadIdx.x; i < D; i += blockDim.x)
@@ -120,7 +120,7 @@ __global__ void layer_norm_fwd_kernel(float *out, float *mean, float *inv_std,
     __syncthreads();
 
     for (int i = threadIdx.x; i < D; i += blockDim.x)
-        or[i] = w[i] * (xr[i] - m) * inv + b[i];
+        out_ptr[i] = w[i] * (xr[i] - m) * inv + b[i];
 }
 
 void layer_norm_forward(float *out, float *mean, float *inv_std,
@@ -203,7 +203,7 @@ __global__ void softmax_fwd_kernel(float *out, const float *x, int N, int C) {
     float *s_sum = sh + blockDim.x;
 
     const float *xr = x + row * C;
-    float *or = out + row * C;
+    float *out_ptr = out + row * C;
 
     float local_max = -1e30f;
     for (int i = threadIdx.x; i < C; i += blockDim.x)
@@ -219,8 +219,8 @@ __global__ void softmax_fwd_kernel(float *out, const float *x, int N, int C) {
 
     float local_sum = 0.0f;
     for (int i = threadIdx.x; i < C; i += blockDim.x) {
-        or[i] = expf(xr[i] - mx);
-        local_sum += or[i];
+        out_ptr[i] = expf(xr[i] - mx);
+        local_sum += out_ptr[i];
     }
     s_sum[threadIdx.x] = local_sum;
     __syncthreads();
@@ -232,7 +232,7 @@ __global__ void softmax_fwd_kernel(float *out, const float *x, int N, int C) {
     __syncthreads();
 
     for (int i = threadIdx.x; i < C; i += blockDim.x)
-        or[i] /= s;
+        out_ptr[i] /= s;
 }
 
 void softmax_forward(float *out, const float *x, int N, int C) {

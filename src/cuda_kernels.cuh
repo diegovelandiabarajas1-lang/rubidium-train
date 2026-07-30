@@ -15,6 +15,10 @@
     fprintf(stderr, "cuBLAS error %s:%d: %d\n", __FILE__, __LINE__, s); \
     exit(1); } } while(0)
 
+#define CD(s) do { if (s != CUDNN_STATUS_SUCCESS) { \
+    fprintf(stderr, "cuDNN error %s:%d: %s\n", __FILE__, __LINE__, cudnnGetErrorString(s)); \
+    exit(1); } } while(0)
+
 // Global handles
 extern cublasHandle_t cublas_handle;
 extern cudnnHandle_t cudnn_handle;
@@ -60,6 +64,11 @@ void gpu_copy(float *dst, const float *src, int N);
 void gpu_zero(float *x, int N);
 void scale_add(float *dst, const float *src, float alpha, int N);
 void apply_causal_mask(float *att, int B, int H, int T);
+
+// Helpers for cuBLAS
+float zero_float();
+float one_float();
+float minus_one_float();
 
 // Linear layer helper
 void linear_forward(float *out, const float *inp, const float *W, const float *b, int M, int Di, int Do);
