@@ -15,7 +15,7 @@
 // ============================================================
 struct ModelConfig {
     int V, T, D, H, L, FF, hd;
-    void init(int v=256, int t=192, int d=384, int h=6, int l=8, int ff=1536) {
+    void init(int v=256, int t=256, int d=2048, int h=32, int l=10, int ff=8192) {
         V=v; T=t; D=d; H=h; L=l; FF=ff; hd=d/h;
     }
 };

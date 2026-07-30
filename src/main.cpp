@@ -61,10 +61,10 @@ int main(int argc, char **argv) {
 
     // Config
     ModelConfig cfg;
-    cfg.init(256, 192, 384, 6, 8, 1536);
+    cfg.init(256, 256, 2048, 32, 10, 8192);
 
     // Hyperparams
-    int BS = 8, GA = 4, max_steps = 100000;
+    int BS = 2, GA = 16, max_steps = 200000;
     float lr = 3e-4f, b1 = 0.9f, b2 = 0.999f, eps = 1e-8f, wd = 0.1f;
     int warmup = 4000;
     float gc = 1.0f;

@@ -7,8 +7,19 @@ set(CMAKE_CUDA_STANDARD 17)
 # CUDA architecture (sm_60 for P100)
 set(CMAKE_CUDA_ARCHITECTURES 60)
 
-# Find cuBLAS
-find_package(CUBLAS REQUIRED)
+# Find cuBLAS (manual path on Kaggle)
+find_library(CUBLAS_LIBRARY cublas
+    HINTS ${CUDNN_DIR}/lib /usr/local/cuda/lib64 /usr/lib/x86_64-linux-gnu
+)
+find_path(CUBLAS_INCLUDE cublas_v2.h
+    HINTS ${CUDNN_DIR}/include /usr/local/cuda/include /usr/include
+)
+
+if(NOT CUBLAS_LIBRARY)
+    message(FATAL_ERROR "cuBLAS not found")
+else()
+    message(STATUS "Found cuBLAS: ${CUBLAS_LIBRARY}")
+endif()
 
 # Find cuDNN
 find_path(CUDNN_INCLUDE cudnn.h
@@ -37,13 +48,14 @@ add_executable(rubidium-train ${SOURCES})
 # Include directories
 target_include_directories(rubidium-train PRIVATE
     ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
+    ${CUBLAS_INCLUDE}
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
 # Link libraries
 target_link_libraries(rubidium-train PRIVATE
+    ${CUBLAS_LIBRARY}
     ${CUDNN_LIBRARY}
-    ${CUBLAS_LIBRARIES}
 )
 
 if(CUDNN_FOUND)
