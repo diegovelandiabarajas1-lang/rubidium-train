@@ -45,6 +45,9 @@ set(SOURCES
     src/main.cpp
     src/model.cu
     src/cuda_kernels.cu
+    src/tokenizer_cuda.cu
+    src/lora.cu
+    src/fine_tune.cu
 )
 
 # Create executable
