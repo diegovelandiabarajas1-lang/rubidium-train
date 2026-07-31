@@ -10,6 +10,15 @@
 #include <algorithm>
 
 // ============================================================
+// INIT
+// ============================================================
+void RubidiumTransformer::init(const ModelConfig &config) {
+    cfg = config;
+    allocate_weights();
+    init_weights();
+}
+
+// ============================================================
 // ALLOCATE WEIGHTS
 // ============================================================
 void RubidiumTransformer::allocate_weights() {

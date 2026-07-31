@@ -61,12 +61,12 @@ int main(int argc, char **argv) {
 
     // Config
     ModelConfig cfg;
-    cfg.init(256, 256, 2048, 32, 10, 8192);
+    cfg.init(32000, 512, 2048, 32, 10, 8192);  // V=32K, T=512
 
     // Hyperparams
     int BS = 2, GA = 16, max_steps = 200000;
     float lr = 3e-4f, b1 = 0.9f, b2 = 0.999f, eps = 1e-8f, wd = 0.1f;
-    int warmup = 4000;
+    int warmup = 6000;
     float gc = 1.0f;
 
     // Load corpus
@@ -102,6 +102,7 @@ int main(int argc, char **argv) {
     // Init model
     RubidiumTransformer model;
     model.init(cfg);
+    model.allocate_activations(BS * cfg.T);
     model.char_to_id = c2i;
     model.id_to_char = i2c;
 
