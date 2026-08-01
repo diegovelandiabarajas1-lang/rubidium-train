@@ -20,10 +20,21 @@ find_library(CURAND_LIBRARY curand
     HINTS ${CUDNN_DIR}/lib /usr/local/cuda/lib64 /usr/lib/x86_64-linux-gnu
 )
 
+# Find cuBLASLt
+find_library(CUBLASLT_LIBRARY cublasLt
+    HINTS ${CUDNN_DIR}/lib /usr/local/cuda/lib64 /usr/lib/x86_64-linux-gnu
+)
+
 if(NOT CUBLAS_LIBRARY)
     message(FATAL_ERROR "cuBLAS not found")
 else()
     message(STATUS "Found cuBLAS: ${CUBLAS_LIBRARY}")
+endif()
+
+if(NOT CUBLASLT_LIBRARY)
+    message(WARNING "cuBLASLt not found, tensor core GEMM disabled")
+else()
+    message(STATUS "Found cuBLASLt: ${CUBLASLT_LIBRARY}")
 endif()
 
 # Find cuDNN
@@ -63,6 +74,7 @@ target_include_directories(rubidium-train PRIVATE
 # Link libraries
 target_link_libraries(rubidium-train PRIVATE
     ${CUBLAS_LIBRARY}
+    ${CUBLASLT_LIBRARY}
     ${CUDNN_LIBRARY}
     ${CURAND_LIBRARY}
 )
