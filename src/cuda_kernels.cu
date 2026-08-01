@@ -888,6 +888,92 @@ void fused_ln_residual_dropout_forward(half* out, float* mean, float* inv_std, u
 }
 
 // ============================================================
+// FP32 SOFTMAX FORWARD (for attention stability)
+// ============================================================
+__global__ void softmax_fp32_fwd_kernel(float* out, const float* x, int N, int C) {
+    int row = blockIdx.x;
+    if (row >= N) return;
+    extern __shared__ float sh[];
+    float* s_max = sh;
+    float* s_sum = sh + blockDim.x;
+
+    const float* xr = x + row * C;
+    float* out_ptr = out + row * C;
+
+    float local_max = -1e30f;
+    for (int i = threadIdx.x; i < C; i += blockDim.x)
+        local_max = fmaxf(local_max, xr[i]);
+    s_max[threadIdx.x] = local_max;
+    __syncthreads();
+    for (int h = blockDim.x / 2; h > 0; h >>= 1) {
+        if (threadIdx.x < h) s_max[threadIdx.x] = fmaxf(s_max[threadIdx.x], s_max[threadIdx.x + h]);
+        __syncthreads();
+    }
+    float mx = s_max[0];
+    __syncthreads();
+
+    float local_sum = 0.0f;
+    for (int i = threadIdx.x; i < C; i += blockDim.x) {
+        out_ptr[i] = expf(xr[i] - mx);
+        local_sum += out_ptr[i];
+    }
+    s_sum[threadIdx.x] = local_sum;
+    __syncthreads();
+    for (int h = blockDim.x / 2; h > 0; h >>= 1) {
+        if (threadIdx.x < h) s_sum[threadIdx.x] += s_sum[threadIdx.x + h];
+        __syncthreads();
+    }
+    float s = s_sum[0];
+    __syncthreads();
+
+    for (int i = threadIdx.x; i < C; i += blockDim.x)
+        out_ptr[i] /= s;
+}
+
+void softmax_fp32_forward(float* out, const float* x, int N, int C) {
+    int threads = 256;
+    if (C < 256) threads = C;
+    size_t shmem = 2 * threads * sizeof(float);
+    softmax_fp32_fwd_kernel<<<N, threads, shmem>>>(out, x, N, C);
+}
+
+// ============================================================
+// FP32 SOFTMAX BACKWARD
+// ============================================================
+__global__ void softmax_fp32_bwd_kernel(float* dx, const float* dout, const float* out,
+                                         int N, int C) {
+    int row = blockIdx.x;
+    if (row >= N) return;
+    extern __shared__ float sh[];
+
+    const float* doutr = dout + row * C;
+    const float* outr = out + row * C;
+    float* dxr = dx + row * C;
+
+    float local_dot = 0.0f;
+    for (int i = threadIdx.x; i < C; i += blockDim.x)
+        local_dot += doutr[i] * outr[i];
+    sh[threadIdx.x] = local_dot;
+    __syncthreads();
+    for (int h = blockDim.x / 2; h > 0; h >>= 1) {
+        if (threadIdx.x < h) sh[threadIdx.x] += sh[threadIdx.x + h];
+        __syncthreads();
+    }
+    float dot = sh[0];
+    __syncthreads();
+
+    for (int i = threadIdx.x; i < C; i += blockDim.x)
+        dxr[i] = outr[i] * (doutr[i] - dot);
+}
+
+void softmax_fp32_backward(float* dx, const float* dout, const float* out, int N, int C) {
+    int threads = 256;
+    if (C < 256) threads = C;
+    size_t shmem = threads * sizeof(float);
+    softmax_fp32_bwd_kernel<<<N, threads, shmem>>>(dx, dout, out, N, C);
+}
+
+// ============================================================
 // CAUSAL MASK (FP32)
 // ============================================================
 __global__ void causal_mask_fp32_kernel(float* att, int B, int H, int T) {

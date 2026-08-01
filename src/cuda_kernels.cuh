@@ -119,6 +119,10 @@ void scale_add_fp16(half* dst, const half* src, float alpha, int N);
 void softmax_fp16_forward(half* out, const half* x, int N, int C);
 void softmax_fp16_backward(half* dx, const half* dout, const half* out, int N, int C);
 
+// Softmax FP32 (for attention stability)
+void softmax_fp32_forward(float* out, const float* x, int N, int C);
+void softmax_fp32_backward(float* dx, const float* dout, const float* out, int N, int C);
+
 // Cross Entropy (FP32 for stability)
 float cross_entropy_fp32_forward(const float* logits, const int* targets, int N, int V);
 void cross_entropy_fp32_backward(float* d_logits, const float* logits, const int* targets, int N, int V);
