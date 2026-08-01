@@ -59,9 +59,12 @@ int main(int argc, char **argv) {
     // Init handles
     init_handles();
 
-    // Config
+// Config
     ModelConfig cfg;
-    cfg.init(32000, 512, 2048, 32, 10, 8192);  // V=32K, T=512
+    cfg.init(32000, 512, 1536, 24, 10, 6144);
+    cfg.use_fp16 = true;
+    cfg.use_activation_checkpointing = true;
+    cfg.grad_accum_steps = 16;
 
     // Hyperparams
     int BS = 2, GA = 16, max_steps = 200000;
