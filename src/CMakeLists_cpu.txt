@@ -1,0 +1,34 @@
+cmake_minimum_required(VERSION 3.18)
+project(rubidium-cpu LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# OpenMP
+find_package(OpenMP REQUIRED)
+
+# Sources
+set(TRAIN_SOURCES
+    cpu_model.cpp
+    cpu_train.cpp
+)
+
+set(FINETUNE_SOURCES
+    cpu_model.cpp
+    cpu_finetune.cpp
+)
+
+# Training executable
+add_executable(rubidium_cpu_train ${TRAIN_SOURCES})
+target_link_libraries(rubidium_cpu_train PRIVATE OpenMP::OpenMP_CXX)
+target_compile_options(rubidium_cpu_train PRIVATE -O3 -march=native)
+
+# Fine-tuning executable
+add_executable(rubidium_cpu_finetune ${FINETUNE_SOURCES})
+target_link_libraries(rubidium_cpu_finetune PRIVATE OpenMP::OpenMP_CXX)
+target_compile_options(rubidium_cpu_finetune PRIVATE -O3 -march=native)
+
+# Create checkpoints directory
+file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/checkpoints)
+
+message(STATUS "OpenMP threads: ${OpenMP_CXX_LIBRARIES}")
